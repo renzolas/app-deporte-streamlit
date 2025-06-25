@@ -1,18 +1,19 @@
 import streamlit as st
 from data.datos_ejemplo import users_db, sports_data
 
+# Configuración inicial
 st.set_page_config(page_title="App Deportiva", layout="centered", initial_sidebar_state="collapsed")
 
+# Estilos
 st.markdown("""
-    <style>
-        .main {background-color: #f0f2f6;}
-        .block-container {padding-top: 2rem; padding-bottom: 2rem;}
-        h1, h2, h3 {color: #003366;}
-        .btn {background-color: #0066cc; color: white; padding: 0.5rem 1rem; border-radius: 5px; margin: 0.5rem 0;}
-        .logo {text-align: center;}
-    </style>
+<style>
+  .block-container {padding: 1rem 2rem;}
+  .logo {text-align: center; margin-bottom: 1rem;}
+  h1, h2, h3 {color: #003366;}
+</style>
 """, unsafe_allow_html=True)
 
+# Estado de sesión
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
     st.session_state.username = ""
@@ -21,18 +22,19 @@ if "authenticated" not in st.session_state:
 if "login_attempts" not in st.session_state:
     st.session_state.login_attempts = 0
 
+# Función de login tolerant with lowercase
 def login(username, password, role):
-    username = username.lower()
-    user = users_db.get(username)
-    return user and user['password'] == password and user['type'] == role
+    u = users_db.get(username.lower())
+    return u and u["password"] == password and u["type"] == role
 
+# Función para mostrar logo
 def mostrar_logo():
-    st.markdown("<div class='logo'><h1>⚽🏀 App Deportiva</h1><p><em>Tu centro deportivo inteligente</em></p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='logo'><h1>⚽🏋️ App Deportiva</h1><p>Tu centro deportivo inteligente</p></div>", unsafe_allow_html=True)
 
+# Pantallas
 def pantalla_login():
     mostrar_logo()
     st.subheader("🔐 Iniciar sesión")
-
     if st.session_state.login_attempts >= 4:
         st.error("⚠️ Has excedido el número máximo de intentos. Por favor, inténtalo más tarde.")
         return
@@ -48,69 +50,56 @@ def pantalla_login():
             st.session_state.role = role
             st.session_state.page = "home_user" if role == "user" else "home_admin"
             st.session_state.login_attempts = 0
+            st.experimental_rerun()
         else:
             st.session_state.login_attempts += 1
             intentos_restantes = 4 - st.session_state.login_attempts
             st.error(f"❌ Usuario o contraseña incorrectos. Intentos restantes: {intentos_restantes}")
 
-    if st.session_state.authenticated:
-        st.experimental_rerun()
-
 def pantalla_usuario():
     mostrar_logo()
-    st.subheader("👤 Panel del Usuario")
-    st.write(f"Hola, **{st.session_state.username}**. ¿Qué te gustaría hacer?")
-
-    if st.button("🎯 Ver deportes y entrenadores"):
+    st.subheader(f"👤 Bienvenido, {st.session_state.username}")
+    if st.button("🎯 Ver deportes"):
         st.session_state.page = "ver_deportes"
         st.experimental_rerun()
-
     if st.button("🔓 Cerrar sesión"):
         cerrar_sesion()
 
 def pantalla_deportes():
     mostrar_logo()
-    st.subheader("🏅 Deportes disponibles")
-
-    selected_sport = st.selectbox("Selecciona un deporte", list(sports_data.keys()))
-
-    if selected_sport:
-        st.markdown(f"### 🧑‍🏫 Entrenadores de {selected_sport}")
-        for entrenador, horarios in sports_data[selected_sport].items():
-            with st.expander(f"📋 {entrenador}"):
+    st.subheader("🏅 Selecciona un deporte")
+    sport = st.selectbox("", list(sports_data.keys()))
+    if sport:
+        for coach, horarios in sports_data[sport].items():
+            with st.expander(f"{coach}"):
                 for h in horarios:
-                    st.markdown(f"🕒 {h}")
-
-    if st.button("🔙 Volver al menú"):
+                    st.markdown(f"- 🕒 {h}")
+    if st.button("🔙 Volver"):
         st.session_state.page = "home_user"
         st.experimental_rerun()
 
 def pantalla_admin():
     mostrar_logo()
-    st.subheader("🧑‍🏫 Panel del Entrenador")
-
-    for sport, entrenadores in sports_data.items():
-        st.markdown(f"### 🏅 {sport}")
-        for entrenador, horarios in entrenadores.items():
-            with st.expander(f"📋 {entrenador} - Clases reservadas"):
+    st.subheader(f"🧑‍🏫 Panel de {st.session_state.username}")
+    for sport, coaches in sports_data.items():
+        st.markdown(f"### {sport.capitalize()}")
+        for coach, horarios in coaches.items():
+            with st.expander(coach):
                 alumnos = [
                     {"nombre": "Alumno 1", "fecha": "2025-07-01", "hora": horarios[0]},
                     {"nombre": "Alumno 2", "fecha": "2025-07-03", "hora": horarios[1]},
                 ]
                 for a in alumnos:
                     st.markdown(f"- 👤 {a['nombre']} | 📅 {a['fecha']} | ⏰ {a['hora']}")
-
     if st.button("🔓 Cerrar sesión"):
         cerrar_sesion()
 
 def cerrar_sesion():
     st.session_state.authenticated = False
-    st.session_state.username = ""
-    st.session_state.role = ""
     st.session_state.page = "login"
-    st.session_state.login_attempts = 0
     st.experimental_rerun()
 
+# Control de flujo
 if not st.session_state.authenticated:
     pantalla_login()
 else:
@@ -118,6 +107,7 @@ else:
         pantalla_usuario()
     elif st.session_state.page == "ver_deportes":
         pantalla_deportes()
-    elif st.session_state.page == "home_admin":
+    else:
         pantalla_admin()
+
 
