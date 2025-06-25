@@ -1,7 +1,7 @@
 # Usuarios simulados (user y admin)
 users_db = {
-    'user1': {'password': '1234', 'type': 'user'},
-    'admin1': {'password': 'admin', 'type': 'admin'},
+    "User1": {"password": "1234", "type": "user"},
+    "Admin1": {"password": "admin123", "type": "admin"}
 }
 
 # Deportes y entrenadores con horarios
