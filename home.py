@@ -60,10 +60,12 @@ def pantalla_login():
             st.session_state.username = username
             st.session_state.role = role
             st.session_state.page = "home_user" if role == "user" else "home_admin"
-            st.success(f"Bienvenido, {username}")
-            st.experimental_rerun()
         else:
             st.error("❌ Usuario o contraseña incorrectos")
+
+    # Hacemos rerun solo si ya está autenticado
+    if st.session_state.authenticated:
+        st.experimental_rerun()
 
 # ---------- HOME USUARIO ----------
 def pantalla_usuario():
@@ -73,6 +75,7 @@ def pantalla_usuario():
 
     if st.button("🎯 Ver deportes y entrenadores"):
         st.session_state.page = "ver_deportes"
+        st.experimental_rerun()
 
     if st.button("🔓 Cerrar sesión"):
         cerrar_sesion()
