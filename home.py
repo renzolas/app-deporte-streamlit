@@ -1,36 +1,18 @@
 import streamlit as st
 from data.datos_ejemplo import users_db, sports_data
 
-# -------------- CONFIGURACIÓN INICIAL --------------
 st.set_page_config(page_title="App Deportiva", layout="centered", initial_sidebar_state="collapsed")
 
-# ---------- ESTILOS PERSONALIZADOS ----------
 st.markdown("""
     <style>
-        .main {
-            background-color: #f0f2f6;
-        }
-        .block-container {
-            padding-top: 2rem;
-            padding-bottom: 2rem;
-        }
-        h1, h2, h3 {
-            color: #003366;
-        }
-        .btn {
-            background-color: #0066cc;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            margin: 0.5rem 0;
-        }
-        .logo {
-            text-align: center;
-        }
+        .main {background-color: #f0f2f6;}
+        .block-container {padding-top: 2rem; padding-bottom: 2rem;}
+        h1, h2, h3 {color: #003366;}
+        .btn {background-color: #0066cc; color: white; padding: 0.5rem 1rem; border-radius: 5px; margin: 0.5rem 0;}
+        .logo {text-align: center;}
     </style>
 """, unsafe_allow_html=True)
 
-# ---------- ESTADO DE SESIÓN ----------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
     st.session_state.username = ""
@@ -39,16 +21,14 @@ if "authenticated" not in st.session_state:
 if "login_attempts" not in st.session_state:
     st.session_state.login_attempts = 0
 
-# ---------- FUNCIÓN DE LOGIN ----------
 def login(username, password, role):
+    username = username.lower()
     user = users_db.get(username)
     return user and user['password'] == password and user['type'] == role
 
-# ---------- LOGO Y CABECERA ----------
 def mostrar_logo():
     st.markdown("<div class='logo'><h1>⚽🏀 App Deportiva</h1><p><em>Tu centro deportivo inteligente</em></p></div>", unsafe_allow_html=True)
 
-# ---------- LOGIN ----------
 def pantalla_login():
     mostrar_logo()
     st.subheader("🔐 Iniciar sesión")
@@ -64,10 +44,10 @@ def pantalla_login():
     if st.button("🚀 Ingresar"):
         if login(username, password, role):
             st.session_state.authenticated = True
-            st.session_state.username = username
+            st.session_state.username = username.lower()
             st.session_state.role = role
             st.session_state.page = "home_user" if role == "user" else "home_admin"
-            st.session_state.login_attempts = 0  # resetear intentos al ingresar bien
+            st.session_state.login_attempts = 0
         else:
             st.session_state.login_attempts += 1
             intentos_restantes = 4 - st.session_state.login_attempts
@@ -76,7 +56,6 @@ def pantalla_login():
     if st.session_state.authenticated:
         st.experimental_rerun()
 
-# ---------- HOME USUARIO ----------
 def pantalla_usuario():
     mostrar_logo()
     st.subheader("👤 Panel del Usuario")
@@ -89,7 +68,6 @@ def pantalla_usuario():
     if st.button("🔓 Cerrar sesión"):
         cerrar_sesion()
 
-# ---------- VER DEPORTES ----------
 def pantalla_deportes():
     mostrar_logo()
     st.subheader("🏅 Deportes disponibles")
@@ -107,7 +85,6 @@ def pantalla_deportes():
         st.session_state.page = "home_user"
         st.experimental_rerun()
 
-# ---------- HOME ADMIN ----------
 def pantalla_admin():
     mostrar_logo()
     st.subheader("🧑‍🏫 Panel del Entrenador")
@@ -126,7 +103,6 @@ def pantalla_admin():
     if st.button("🔓 Cerrar sesión"):
         cerrar_sesion()
 
-# ---------- CERRAR SESIÓN ----------
 def cerrar_sesion():
     st.session_state.authenticated = False
     st.session_state.username = ""
@@ -135,7 +111,6 @@ def cerrar_sesion():
     st.session_state.login_attempts = 0
     st.experimental_rerun()
 
-# ---------- CONTROL DE RENDER ----------
 if not st.session_state.authenticated:
     pantalla_login()
 else:
