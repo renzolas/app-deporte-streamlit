@@ -36,6 +36,8 @@ if "authenticated" not in st.session_state:
     st.session_state.username = ""
     st.session_state.role = ""
     st.session_state.page = "login"
+if "login_attempts" not in st.session_state:
+    st.session_state.login_attempts = 0
 
 # ---------- FUNCIÓN DE LOGIN ----------
 def login(username, password, role):
@@ -50,6 +52,11 @@ def mostrar_logo():
 def pantalla_login():
     mostrar_logo()
     st.subheader("🔐 Iniciar sesión")
+
+    if st.session_state.login_attempts >= 4:
+        st.error("⚠️ Has excedido el número máximo de intentos. Por favor, inténtalo más tarde.")
+        return
+
     username = st.text_input("👤 Usuario")
     password = st.text_input("🔑 Contraseña", type="password")
     role = st.radio("Tipo de acceso:", ["user", "admin"], horizontal=True)
@@ -60,10 +67,12 @@ def pantalla_login():
             st.session_state.username = username
             st.session_state.role = role
             st.session_state.page = "home_user" if role == "user" else "home_admin"
+            st.session_state.login_attempts = 0  # resetear intentos al ingresar bien
         else:
-            st.error("❌ Usuario o contraseña incorrectos")
+            st.session_state.login_attempts += 1
+            intentos_restantes = 4 - st.session_state.login_attempts
+            st.error(f"❌ Usuario o contraseña incorrectos. Intentos restantes: {intentos_restantes}")
 
-    # Hacemos rerun solo si ya está autenticado
     if st.session_state.authenticated:
         st.experimental_rerun()
 
@@ -123,6 +132,7 @@ def cerrar_sesion():
     st.session_state.username = ""
     st.session_state.role = ""
     st.session_state.page = "login"
+    st.session_state.login_attempts = 0
     st.experimental_rerun()
 
 # ---------- CONTROL DE RENDER ----------
