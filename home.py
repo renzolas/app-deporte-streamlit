@@ -1,47 +1,24 @@
 import streamlit as st
+from data.datos_ejemplo import users_db  # ✅ Importa desde archivo externo
 
-# ----------- DATOS SIMULADOS -----------
+# ----------- CONFIGURACIÓN DE PÁGINA -----------
+st.set_page_config(page_title="App Deportiva", layout="centered")
+st.title("🏋️‍♀️ Bienvenido a la App Deportiva")
 
-# Usuarios simulados (user y admin)
-users_db = {
-    'user1': {'password': '1234', 'type': 'user'},
-    'admin1': {'password': 'admin', 'type': 'admin'},
-}
+# ----------- SESIÓN -----------
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+    st.session_state.role = ""
+    st.session_state.username = ""
 
-# Deportes y entrenadores
-sports_data = {
-    'Fútbol': {
-        'Entrenador Luis': ['Lunes 10:00', 'Miércoles 12:00'],
-        'Entrenadora María': ['Martes 15:00', 'Jueves 10:00']
-    },
-    'Básquet': {
-        'Coach Diego': ['Lunes 18:00', 'Viernes 17:00']
-    },
-    'Vóley': {
-        'Coach Ana': ['Miércoles 09:00', 'Viernes 11:00']
-    }
-}
-
-# ----------- FUNCIONES -----------
-
+# ----------- FUNCIÓN DE LOGIN -----------
 def login(username, password, role):
     user = users_db.get(username)
     if user and user['password'] == password and user['type'] == role:
         return True
     return False
 
-# ----------- INTERFAZ -----------
-
-st.set_page_config(page_title="App Deportiva", layout="centered")
-st.title("🏋️‍♀️ App de Clases Deportivas")
-
-# Sesión
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-    st.session_state.role = ""
-    st.session_state.username = ""
-
-# LOGIN
+# ----------- INTERFAZ DE LOGIN -----------
 if not st.session_state.authenticated:
     st.subheader("Iniciar sesión")
 
@@ -55,28 +32,14 @@ if not st.session_state.authenticated:
             st.session_state.role = role
             st.session_state.username = username
             st.success(f"Bienvenido, {username} ({role})")
-            st.experimental_rerun()
+            st.info("Usa el menú de la izquierda para navegar")
+            st.stop()
         else:
-            st.error("Credenciales incorrectas")
+            st.error("Credenciales incorrectas. Intenta de nuevo.")
 
-# APP PRINCIPAL
 else:
-    st.success(f"Sesión iniciada como: {st.session_state.username} ({st.session_state.role})")
-    st.write("Selecciona un deporte para ver entrenadores disponibles:")
-
-    selected_sport = st.selectbox("🏀 Deportes disponibles", list(sports_data.keys()))
-
-    if selected_sport:
-        st.subheader(f"Entrenadores de {selected_sport}")
-        trainers = sports_data[selected_sport]
-
-        for trainer, horarios in trainers.items():
-            with st.expander(f"{trainer}"):
-                st.markdown("**Horarios disponibles:**")
-                for h in horarios:
-                    st.markdown(f"- 🕒 {h}")
-
-    st.divider()
+    st.success(f"Sesión activa: {st.session_state.username} ({st.session_state.role})")
+    st.info("Usa el menú lateral izquierdo para acceder a las páginas.")
     if st.button("Cerrar sesión"):
         st.session_state.authenticated = False
         st.session_state.username = ""
