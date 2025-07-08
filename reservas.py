@@ -1,49 +1,55 @@
 import streamlit as st
-from datetime import datetime, date, time
 
-# Simulación de base de datos de reservas (lista)
+# Simulación de reservas en memoria (más adelante podemos usar JSON)
 reservas = []
 
-# Simulación de canchas (esto se puede conectar luego con fields.py)
-canchas_disponibles = [
-    {"id": 1, "nombre": "Cancha Fútbol Norte"},
-    {"id": 2, "nombre": "Cancha Tenis Central"},
-    {"id": 3, "nombre": "Cancha Padel Sur"},
+# Lista de horarios disponibles
+HORARIOS = [
+    "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00",
+    "12:00 - 13:00", "13:00 - 14:00", "14:00 - 15:00",
+    "15:00 - 16:00", "16:00 - 17:00", "17:00 - 18:00"
 ]
 
 def reservar_cancha():
-    st.subheader("Reservar una cancha")
+    st.subheader("📅 Reservar Cancha - Cancha Norte")
+    nombre = st.text_input("Tu nombre")
+    dia = st.date_input("Selecciona un día")
 
-    # Seleccionar cancha
-    cancha = st.selectbox("Selecciona una cancha", [c["nombre"] for c in canchas_disponibles])
+    st.markdown("### 🕒 Selecciona un horario disponible:")
 
-    # Seleccionar fecha
-    fecha = st.date_input("Selecciona una fecha", min_value=date.today())
+    col1, col2, col3 = st.columns(3)
 
-    # Seleccionar hora
-    hora = st.selectbox("Selecciona una hora", ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "17:00", "18:00", "19:00"])
-
-    # Confirmar
-    if st.button("Reservar"):
-        nueva_reserva = {
-            "cancha": cancha,
-            "fecha": fecha.strftime("%Y-%m-%d"),
-            "hora": hora,
-            "usuario": "usuario_demo@example.com"  # Por ahora, fijo; luego será dinámico
-        }
-        reservas.append(nueva_reserva)
-        st.success(f"Reserva confirmada para {cancha} el {fecha} a las {hora}")
-
-        # Mostrar resumen
-        st.write("Tu reserva:")
-        st.json(nueva_reserva)
+    for i, horario in enumerate(HORARIOS):
+        columna = [col1, col2, col3][i % 3]
+        ocupado = any(r["dia"] == dia and r["horario"] == horario for r in reservas)
+        if ocupado:
+            columna.button(f"❌ {horario}", key=f"disabled_{i}", disabled=True)
+        else:
+            if columna.button(f"✅ {horario}", key=f"btn_{i}"):
+                if nombre:
+                    reservas.append({
+                        "nombre": nombre,
+                        "dia": dia,
+                        "horario": horario
+                    })
+                    st.success(f"Reserva confirmada para {horario} el {dia}")
+                    st.balloons()
+                else:
+                    st.warning("Por favor, escribe tu nombre.")
 
 def ver_reservas():
-    st.subheader("Mis reservas (simulado)")
+    st.subheader("📖 Tus Reservas")
+
     if reservas:
         for r in reservas:
-            st.markdown(f"📌 {r['cancha']} | {r['fecha']} - {r['hora']}")
-            st.divider()
+            st.markdown(f"""
+            🔹 **{r['nombre']}** reservó  
+            🏟️ *Cancha Norte*  
+            📅 Día: **{r['dia']}**  
+            🕒 Horario: **{r['horario']}**
+            ---
+            """)
     else:
-        st.info("Aún no tienes reservas registradas.")
+        st.info("No hay reservas aún.")
+
 
