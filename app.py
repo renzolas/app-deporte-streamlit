@@ -3,8 +3,9 @@ from users import registrar_usuario, login_usuario
 from fields import gestion_canchas
 from reservas import reservar_cancha, ver_reservas
 
+st.set_page_config(page_title="App de Reservas Deportivas", layout="wide")
+
 def main():
-    st.set_page_config(page_title="App de Reservas", layout="wide")
     st.markdown("<h1 style='text-align: center; color: #2C3E50;'>⚽ App de Reservas Deportivas</h1>", unsafe_allow_html=True)
 
     menu = ["Login", "Registro"]
@@ -28,42 +29,46 @@ def main():
 
         if st.button("Entrar"):
             if login_usuario(email, password):
+                st.session_state["logueado"] = True
+                st.session_state["email"] = email
                 st.success(f"Bienvenido, {email}!")
-
-                # Detectar si es admin
-                es_admin = email == "admin@cancha.com"
-
-                if es_admin:
-                    mostrar_menu_admin()
-                else:
-                    mostrar_menu_usuario()
+                st.experimental_rerun()  # Refresca para mostrar menú
             else:
                 st.error("Email o contraseña incorrectos.")
 
-def mostrar_menu_admin():
-    st.markdown("## 🛠 Panel del Administrador")
-    col1, col2 = st.columns(2)
+# Verifica si hay sesión activa
+if "logueado" in st.session_state and st.session_state["logueado"]:
+    email = st.session_state["email"]
+    es_admin = email == "admin@cancha.com"
 
-    with col1:
-        if st.button("📋 Gestionar Canchas", use_container_width=True):
-            gestion_canchas()
+    st.sidebar.success(f"Sesión activa: {email}")
+    st.sidebar.button("Cerrar sesión", on_click=lambda: st.session_state.clear())
 
-    with col2:
-        if st.button("📅 Ver Reservas de Usuarios", use_container_width=True):
-            ver_reservas()  # Puedes luego crear una función especial para admins
+    if es_admin:
+        st.markdown("## 🛠 Panel del Administrador")
+        col1, col2 = st.columns(2)
 
-def mostrar_menu_usuario():
-    st.markdown("## 🙋 Menú del Usuario")
-    col1, col2 = st.columns(2)
+        with col1:
+            if st.button("📋 Gestionar Canchas", use_container_width=True):
+                gestion_canchas()
 
-    with col1:
-        if st.button("📅 Reservar Cancha", use_container_width=True):
-            reservar_cancha()
+        with col2:
+            if st.button("📅 Ver Reservas de Usuarios", use_container_width=True):
+                ver_reservas()  # Por ahora muestra todas
 
-    with col2:
-        if st.button("📖 Ver Mis Reservas", use_container_width=True):
-            ver_reservas()
+    else:
+        st.markdown("## 🙋 Menú del Usuario")
+        col1, col2 = st.columns(2)
 
-if __name__ == "__main__":
+        with col1:
+            if st.button("📅 Reservar Cancha", use_container_width=True):
+                reservar_cancha()
+
+        with col2:
+            if st.button("📖 Ver Mis Reservas", use_container_width=True):
+                ver_reservas()
+
+else:
     main()
+
 
