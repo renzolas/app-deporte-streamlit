@@ -1,6 +1,8 @@
 import streamlit as st
 from fields import gestion_canchas
 from users import login_usuario, registrar_usuario
+from reservas import reservar_cancha, ver_reservas
+
 def main():
     st.title("App de Reservas Deportivas")
 
