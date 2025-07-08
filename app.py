@@ -8,67 +8,63 @@ st.set_page_config(page_title="App de Reservas Deportivas", layout="wide")
 def main():
     st.markdown("<h1 style='text-align: center; color: #2C3E50;'>⚽ App de Reservas Deportivas</h1>", unsafe_allow_html=True)
 
-    menu = ["Login", "Registro"]
-    opcion = st.sidebar.selectbox("👤 Selecciona una opción", menu)
+    if "logueado" not in st.session_state:
+        st.session_state["logueado"] = False
 
-    if opcion == "Registro":
-        st.subheader("📝 Registro")
-        email = st.text_input("Email")
-        password = st.text_input("Contraseña", type="password")
-        if st.button("Registrar"):
-            exito, mensaje = registrar_usuario(email, password)
-            if exito:
-                st.success(mensaje)
-            else:
-                st.error(mensaje)
+    if not st.session_state["logueado"]:
+        menu = ["Login", "Registro"]
+        opcion = st.sidebar.selectbox("👤 Selecciona una opción", menu)
 
-    elif opcion == "Login":
-        st.subheader("🔐 Iniciar sesión")
-        email = st.text_input("Email", key="login_email")
-        password = st.text_input("Contraseña", type="password", key="login_pass")
+        if opcion == "Registro":
+            st.subheader("📝 Registro")
+            email = st.text_input("Email")
+            password = st.text_input("Contraseña", type="password")
+            if st.button("Registrar"):
+                exito, mensaje = registrar_usuario(email, password)
+                if exito:
+                    st.success(mensaje)
+                else:
+                    st.error(mensaje)
 
-        if st.button("Entrar"):
-            if login_usuario(email, password):
-                st.session_state["logueado"] = True
-                st.session_state["email"] = email
-                st.success(f"Bienvenido, {email}!")
-                st.experimental_rerun()  # Refresca para mostrar menú
-            else:
-                st.error("Email o contraseña incorrectos.")
+        elif opcion == "Login":
+            st.subheader("🔐 Iniciar sesión")
+            email = st.text_input("Email", key="login_email")
+            password = st.text_input("Contraseña", type="password", key="login_pass")
 
-# Verifica si hay sesión activa
-if "logueado" in st.session_state and st.session_state["logueado"]:
-    email = st.session_state["email"]
-    es_admin = email == "admin@cancha.com"
-
-    st.sidebar.success(f"Sesión activa: {email}")
-    st.sidebar.button("Cerrar sesión", on_click=lambda: st.session_state.clear())
-
-    if es_admin:
-        st.markdown("## 🛠 Panel del Administrador")
-        col1, col2 = st.columns(2)
-
-        with col1:
-            if st.button("📋 Gestionar Canchas", use_container_width=True):
-                gestion_canchas()
-
-        with col2:
-            if st.button("📅 Ver Reservas de Usuarios", use_container_width=True):
-                ver_reservas()  # Por ahora muestra todas
+            if st.button("Entrar"):
+                if login_usuario(email, password):
+                    st.session_state["logueado"] = True
+                    st.session_state["email"] = email
+                    st.experimental_rerun()  # Refresca solo si login exitoso
+                else:
+                    st.error("Email o contraseña incorrectos.")
 
     else:
-        st.markdown("## 🙋 Menú del Usuario")
-        col1, col2 = st.columns(2)
+        email = st.session_state["email"]
+        es_admin = email == "admin@cancha.com"
 
-        with col1:
-            if st.button("📅 Reservar Cancha", use_container_width=True):
+        st.sidebar.success(f"Sesión activa: {email}")
+        if st.sidebar.button("Cerrar sesión"):
+            st.session_state.clear()
+            st.experimental_rerun()
+
+        if es_admin:
+            st.markdown("## 🛠 Panel del Administrador")
+            menu = st.sidebar.radio("Selecciona una opción", ["📋 Gestionar Canchas", "📖 Ver Reservas de Usuarios"])
+            if menu == "📋 Gestionar Canchas":
+                gestion_canchas()
+            elif menu == "📖 Ver Reservas de Usuarios":
+                ver_reservas()
+        else:
+            st.markdown("## 🙋 Menú del Usuario")
+            menu = st.sidebar.radio("Selecciona una opción", ["📅 Reservar Cancha", "📖 Ver Mis Reservas"])
+            if menu == "📅 Reservar Cancha":
                 reservar_cancha()
-
-        with col2:
-            if st.button("📖 Ver Mis Reservas", use_container_width=True):
+            elif menu == "📖 Ver Mis Reservas":
                 ver_reservas()
 
-else:
-    main()
+# Ejecuta la app
+main()
+
 
 
