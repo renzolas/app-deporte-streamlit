@@ -35,7 +35,7 @@ def main():
                 if login_usuario(email, password):
                     st.session_state["logueado"] = True
                     st.session_state["email"] = email
-                    st.experimental_rerun()  # Refresca solo si login exitoso
+                    st.success("Login exitoso. Usa el menú lateral para continuar.")
                 else:
                     st.error("Email o contraseña incorrectos.")
 
