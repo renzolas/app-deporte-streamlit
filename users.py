@@ -6,18 +6,37 @@ usuarios = {
     "admin@example.com": "adminpass"
 }
 
+
+# users.py
+
+# Simulación de base de datos en memoria
+usuarios = []
+
 def registrar_usuario(email, password):
-    if email in usuarios:
-        st.error("El usuario ya existe.")
-    else:
-        usuarios[email] = password
-        st.success("Usuario registrado con éxito.")
+    """
+    Registra un nuevo usuario si no existe.
+    """
+    for u in usuarios:
+        if u["email"] == email:
+            return False, "El usuario ya está registrado."
+    usuarios.append({"email": email, "password": password})
+    return True, "Usuario registrado con éxito."
 
 def login_usuario(email, password):
-    if email in usuarios and usuarios[email] == password:
-        return True
-    else:
-        return False
+    """
+    Verifica credenciales de login.
+    """
+    for u in usuarios:
+        if u["email"] == email and u["password"] == password:
+            return True
+    return False
+
+def reset_usuarios():
+    """
+    (Opcional) Limpia la lista de usuarios.
+    """
+    global usuarios
+    usuarios = []
 
 def main():
     st.title("App de Reservas - Registro y Login")
