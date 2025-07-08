@@ -1,6 +1,6 @@
 import streamlit as st
 
-# Simulación de reservas en memoria (más adelante podemos usar JSON)
+# Simulación de reservas en memoria
 reservas = []
 
 # Lista de horarios disponibles
@@ -12,7 +12,13 @@ HORARIOS = [
 
 def reservar_cancha():
     st.subheader("📅 Reservar Cancha - Cancha Norte")
-    nombre = st.text_input("Tu nombre")
+
+    email_usuario = st.session_state.get("email", "")
+    if not email_usuario:
+        st.warning("Debes iniciar sesión para reservar.")
+        return
+
+    st.markdown(f"👤 Usuario: **{email_usuario}**")
     dia = st.date_input("Selecciona un día")
 
     st.markdown("### 🕒 Selecciona un horario disponible:")
@@ -26,30 +32,31 @@ def reservar_cancha():
             columna.button(f"❌ {horario}", key=f"disabled_{i}", disabled=True)
         else:
             if columna.button(f"✅ {horario}", key=f"btn_{i}"):
-                if nombre:
-                    reservas.append({
-                        "nombre": nombre,
-                        "dia": dia,
-                        "horario": horario
-                    })
-                    st.success(f"Reserva confirmada para {horario} el {dia}")
-                    st.balloons()
-                else:
-                    st.warning("Por favor, escribe tu nombre.")
+                reservas.append({
+                    "usuario": email_usuario,
+                    "dia": dia,
+                    "horario": horario
+                })
+                st.success(f"Reserva confirmada para {horario} el {dia}")
+                st.balloons()
 
 def ver_reservas():
     st.subheader("📖 Tus Reservas")
+    email_actual = st.session_state.get("email", "")
 
-    if reservas:
-        for r in reservas:
+    reservas_usuario = [r for r in reservas if r["usuario"] == email_actual]
+
+    if reservas_usuario:
+        for r in reservas_usuario:
             st.markdown(f"""
-            🔹 **{r['nombre']}** reservó  
-            🏟️ *Cancha Norte*  
+            🔹 **{r['usuario']}**  
+            🏟️ Cancha: *Norte*  
             📅 Día: **{r['dia']}**  
             🕒 Horario: **{r['horario']}**
             ---
             """)
     else:
-        st.info("No hay reservas aún.")
+        st.info("No tienes reservas aún.")
+
 
 
