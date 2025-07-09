@@ -2,7 +2,8 @@ import streamlit as st
 from fields import canchas
 
 # Simulación de reservas en memoria
-reservas = []
+if "reservas" not in st.session_state:
+    st.session_state["reservas"] = []
 
 HORARIOS = [
     "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00",
@@ -35,16 +36,16 @@ def reservar_cancha():
     for i, horario in enumerate(HORARIOS):
         columna = [col1, col2, col3][i % 3]
         ocupado = any(
-            r["dia"] == dia and r["horario"] == horario and r["cancha"] == cancha_seleccionada
-            for r in reservas
+            r["dia"] == str(dia) and r["horario"] == horario and r["cancha"] == cancha_seleccionada
+            for r in st.session_state["reservas"]
         )
         if ocupado:
             columna.button(f"❌ {horario}", key=f"disabled_{i}", disabled=True)
         else:
             if columna.button(f"✅ {horario}", key=f"btn_{i}"):
-                reservas.append({
+                st.session_state["reservas"].append({
                     "usuario": email_usuario,
-                    "dia": dia,
+                    "dia": str(dia),
                     "horario": horario,
                     "cancha": cancha_seleccionada
                 })
@@ -52,20 +53,38 @@ def reservar_cancha():
                 st.balloons()
 
 def ver_reservas():
-    st.subheader("📖 Tus Reservas")
     email_actual = st.session_state.get("email", "")
+    es_admin = email_actual == "admin@cancha.com"
 
-    reservas_usuario = [r for r in reservas if r["usuario"] == email_actual]
+    reservas = st.session_state.get("reservas", [])
 
-    if reservas_usuario:
-        for r in reservas_usuario:
+    if not reservas:
+        st.info("No hay reservas registradas aún.")
+        return
+
+    if es_admin:
+        st.subheader("📖 Reservas de Todos los Usuarios")
+        for r in reservas:
             st.markdown(f"""
-            🔹 **{r['usuario']}**  
-            🏟️ Cancha: **{r['cancha']}**  
-            📅 Día: **{r['dia']}**  
-            🕒 Horario: **{r['horario']}**
+            👤 **Usuario:** {r['usuario']}  
+            🏟️ **Cancha:** {r['cancha']}  
+            📅 **Día:** {r['dia']}  
+            🕒 **Horario:** {r['horario']}
             ---
             """)
     else:
-        st.info("No tienes reservas aún.")
+        st.subheader("📖 Mis Reservas")
+        reservas_usuario = [r for r in reservas if r["usuario"] == email_actual]
+
+        if not reservas_usuario:
+            st.info("No tienes reservas aún.")
+        else:
+            for r in reservas_usuario:
+                st.markdown(f"""
+                🏟️ Cancha: **{r['cancha']}**  
+                📅 Día: **{r['dia']}**  
+                🕒 Horario: **{r['horario']}
+                ---
+                """)
+
 
