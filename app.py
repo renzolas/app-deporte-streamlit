@@ -70,4 +70,5 @@ def main():
 
 # Ejecuta la app
 main()
-verificar_rerun()
+# verificar_rerun()
+
