@@ -41,11 +41,7 @@ def main():
 
     else:
         email = st.session_state["email"]
-        es_admin = email == "admin@cancha.com"
-
-        if st.session_state.get("pendiente_rerun"):
-            st.session_state["pendiente_rerun"] = False
-            st.experimental_rerun()
+        es_admin = email == "admin@cancha.com"       
 
         st.sidebar.success(f"Sesión activa: {email}")
         if st.sidebar.button("Cerrar sesión"):
