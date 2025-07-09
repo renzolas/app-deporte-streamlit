@@ -5,17 +5,14 @@ from reservas import reservar_cancha, ver_reservas
 
 st.set_page_config(page_title="App de Reservas Deportivas", layout="wide")
 
-def verificar_rerun():
-    if st.session_state.get("pendiente_rerun"):
-        st.session_state["pendiente_rerun"] = False
-        st.experimental_rerun()
-
 def main():
     st.markdown("<h1 style='text-align: center; color: #2C3E50;'>⚽ App de Reservas Deportivas</h1>", unsafe_allow_html=True)
 
+    # Inicializar estado
     if "logueado" not in st.session_state:
         st.session_state["logueado"] = False
 
+    # MENÚ INICIAL SI NO ESTÁ LOGUEADO
     if not st.session_state["logueado"]:
         menu = ["Login", "Registro"]
         opcion = st.sidebar.selectbox("👤 Selecciona una opción", menu)
@@ -36,14 +33,15 @@ def main():
             email = st.text_input("Email", key="login_email")
             password = st.text_input("Contraseña", type="password", key="login_pass")
 
-            if st.button("Entrar"):
+            if st.button("Entrar") and not st.session_state["logueado"]:
                 if login_usuario(email, password):
                     st.session_state["logueado"] = True
                     st.session_state["email"] = email
-                    st.session_state["pendiente_rerun"] = True
+                    st.success("Login exitoso. Usa el menú lateral para continuar...")
                 else:
                     st.error("Email o contraseña incorrectos.")
 
+    # MENÚ POST LOGIN
     else:
         email = st.session_state["email"]
         es_admin = email == "admin@cancha.com"       
@@ -51,7 +49,6 @@ def main():
         st.sidebar.success(f"Sesión activa: {email}")
         if st.sidebar.button("Cerrar sesión"):
             st.session_state.clear()
-            st.experimental_rerun()
 
         if es_admin:
             st.markdown("## 🛠 Panel del Administrador")
@@ -68,7 +65,7 @@ def main():
             elif menu == "📖 Ver Mis Reservas":
                 ver_reservas()
 
-# Ejecuta la app
+# Ejecutar la app
 main()
-# verificar_rerun()
+
 
