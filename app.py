@@ -35,13 +35,17 @@ def main():
                 if login_usuario(email, password):
                     st.session_state["logueado"] = True
                     st.session_state["email"] = email
-                    st.experimental_rerun()
+                    st.session_state["pendiente_rerun"] = True
                 else:
                     st.error("Email o contraseña incorrectos.")
 
     else:
         email = st.session_state["email"]
         es_admin = email == "admin@cancha.com"
+
+        if st.session_state.get("pendiente_rerun"):
+            st.session_state["pendiente_rerun"] = False
+            st.experimental_rerun()
 
         st.sidebar.success(f"Sesión activa: {email}")
         if st.sidebar.button("Cerrar sesión"):
