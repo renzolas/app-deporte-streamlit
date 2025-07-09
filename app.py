@@ -5,6 +5,11 @@ from reservas import reservar_cancha, ver_reservas
 
 st.set_page_config(page_title="App de Reservas Deportivas", layout="wide")
 
+def verificar_rerun():
+    if st.session_state.get("pendiente_rerun"):
+        st.session_state["pendiente_rerun"] = False
+        st.experimental_rerun()
+
 def main():
     st.markdown("<h1 style='text-align: center; color: #2C3E50;'>⚽ App de Reservas Deportivas</h1>", unsafe_allow_html=True)
 
@@ -65,10 +70,4 @@ def main():
 
 # Ejecuta la app
 main()
-
-if st.session_state.get("pendiente_rerun"):
-    st.session_state["pendiente_rerun"] = False
-    st.experimental_rerun()
-
-
-
+verificar_rerun()
