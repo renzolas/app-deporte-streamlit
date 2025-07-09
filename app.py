@@ -66,5 +66,9 @@ def main():
 # Ejecuta la app
 main()
 
+if st.session_state.get("pendiente_rerun"):
+    st.session_state["pendiente_rerun"] = False
+    st.experimental_rerun()
+
 
 
