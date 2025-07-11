@@ -1,10 +1,10 @@
 import streamlit as st
 
-# ✅ Inicializar lista de canchas en session_state si no existe
-if "canchas" not in st.session_state:
-    st.session_state["canchas"] = []
-
 def gestion_canchas():
+    # ✅ Inicializar lista de canchas si no existe en session_state
+    if "canchas" not in st.session_state:
+        st.session_state["canchas"] = []
+
     st.subheader("⚙️ Gestión de Canchas")
 
     with st.form("form_cancha"):
