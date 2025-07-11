@@ -1,12 +1,5 @@
 import streamlit as st
 
-# Simulación de reservas en memoria
-if "reservas" not in st.session_state:
-    st.session_state["reservas"] = []
-
-if "canchas" not in st.session_state:
-    st.session_state["canchas"] = []
-
 HORARIOS = [
     "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00",
     "12:00 - 13:00", "13:00 - 14:00", "14:00 - 15:00",
@@ -23,13 +16,18 @@ def reservar_cancha():
 
     st.markdown(f"👤 Usuario: **{email_usuario}**")
 
-    canchas = st.session_state["canchas"]
+    canchas = st.session_state.get("canchas", [])
+    reservas = st.session_state.get("reservas", [])
 
     if not canchas:
         st.info("No hay canchas disponibles aún. Intenta más tarde.")
         return
 
-    nombres_canchas = [c["nombre"] for c in canchas]
+    nombres_canchas = [c["nombre"] for c in canchas if c.get("disponible", True)]
+    if not nombres_canchas:
+        st.warning("Actualmente no hay canchas disponibles.")
+        return
+
     cancha_seleccionada = st.selectbox("Selecciona una cancha", nombres_canchas)
     dia = st.date_input("Selecciona un día")
 
@@ -41,18 +39,20 @@ def reservar_cancha():
         columna = [col1, col2, col3][i % 3]
         ocupado = any(
             r["dia"] == str(dia) and r["horario"] == horario and r["cancha"] == cancha_seleccionada
-            for r in st.session_state["reservas"]
+            for r in reservas
         )
         if ocupado:
             columna.button(f"❌ {horario}", key=f"disabled_{i}", disabled=True)
         else:
             if columna.button(f"✅ {horario}", key=f"btn_{i}"):
-                st.session_state["reservas"].append({
+                nueva_reserva = {
                     "usuario": email_usuario,
                     "dia": str(dia),
                     "horario": horario,
                     "cancha": cancha_seleccionada
-                })
+                }
+                reservas.append(nueva_reserva)
+                st.session_state["reservas"] = reservas
                 st.success(f"Reserva confirmada en {cancha_seleccionada} para {horario} el {dia}")
                 st.balloons()
 
@@ -89,7 +89,6 @@ def ver_reservas():
                 🕒 Horario: **{r['horario']}**
                 ---
                 """)
-
 
 
 
