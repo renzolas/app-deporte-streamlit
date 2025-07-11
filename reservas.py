@@ -1,9 +1,11 @@
 import streamlit as st
-from fields import canchas
 
 # Simulación de reservas en memoria
 if "reservas" not in st.session_state:
     st.session_state["reservas"] = []
+
+if "canchas" not in st.session_state:
+    st.session_state["canchas"] = []
 
 HORARIOS = [
     "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00",
@@ -20,6 +22,8 @@ def reservar_cancha():
         return
 
     st.markdown(f"👤 Usuario: **{email_usuario}**")
+
+    canchas = st.session_state["canchas"]
 
     if not canchas:
         st.info("No hay canchas disponibles aún. Intenta más tarde.")
@@ -55,7 +59,6 @@ def reservar_cancha():
 def ver_reservas():
     email_actual = st.session_state.get("email", "")
     es_admin = email_actual == "admin@cancha.com"
-
     reservas = st.session_state.get("reservas", [])
 
     if not reservas:
@@ -83,8 +86,10 @@ def ver_reservas():
                 st.markdown(f"""
                 🏟️ Cancha: **{r['cancha']}**  
                 📅 Día: **{r['dia']}**  
-                🕒 Horario: **{r['horario']}
+                🕒 Horario: **{r['horario']}**
                 ---
                 """)
+
+
 
 
