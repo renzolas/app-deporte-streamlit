@@ -3,6 +3,10 @@ from users import registrar_usuario, login_usuario
 from fields import gestion_canchas
 from reservas import reservar_cancha, ver_reservas
 
+# ✅ Inicialización segura de reservas
+if "reservas" not in st.session_state:
+    st.session_state["reservas"] = []
+
 st.set_page_config(page_title="App de Reservas Deportivas", layout="wide")
 
 def main():
@@ -38,6 +42,7 @@ def main():
                     st.session_state["logueado"] = True
                     st.session_state["email"] = email
                     st.success("Login exitoso. Usa el menú lateral para continuar...")
+                    st.experimental_rerun()  # 🔁 Refresca para mostrar el menú de usuario
                 else:
                     st.error("Email o contraseña incorrectos.")
 
@@ -49,6 +54,7 @@ def main():
         st.sidebar.success(f"Sesión activa: {email}")
         if st.sidebar.button("Cerrar sesión"):
             st.session_state.clear()
+            st.experimental_rerun()  # 🔁 Refresca para volver al menú de login
 
         if es_admin:
             st.markdown("## 🛠 Panel del Administrador")
