@@ -1,11 +1,9 @@
 import streamlit as st
 
 def gestion_canchas():
-    # ✅ Inicializar lista de canchas si no existe en session_state
-    if "canchas" not in st.session_state:
-        st.session_state["canchas"] = []
-
     st.subheader("⚙️ Gestión de Canchas")
+
+    canchas = st.session_state.get("canchas", [])
 
     with st.form("form_cancha"):
         nombre = st.text_input("Nombre de la nueva cancha")
@@ -22,7 +20,8 @@ def gestion_canchas():
                     "precio": precio,
                     "disponible": disponible
                 }
-                st.session_state["canchas"].append(nueva_cancha)
+                canchas.append(nueva_cancha)
+                st.session_state["canchas"] = canchas
                 st.success(f"✅ Cancha '{nombre}' agregada correctamente.")
             else:
                 st.warning("⚠️ El nombre de la cancha es obligatorio.")
@@ -30,13 +29,12 @@ def gestion_canchas():
     st.markdown("---")
     st.markdown("### 🏟️ Canchas Registradas")
 
-    if not st.session_state["canchas"]:
+    if not canchas:
         st.info("Aún no hay canchas registradas.")
         return
 
-    for idx, cancha in enumerate(st.session_state["canchas"]):
+    for idx, cancha in enumerate(canchas):
         col1, col2, col3 = st.columns([4, 1, 1])
-        
         estado = "✅ Disponible" if cancha.get("disponible", True) else "❌ No disponible"
 
         col1.markdown(f"""
@@ -47,11 +45,14 @@ def gestion_canchas():
         """)
 
         if col2.button("🟡 Cambiar", key=f"toggle_disp_{idx}"):
-            st.session_state["canchas"][idx]["disponible"] = not cancha.get("disponible", True)
+            canchas[idx]["disponible"] = not cancha.get("disponible", True)
+            st.session_state["canchas"] = canchas
             st.experimental_rerun()
 
         if col3.button("🗑 Eliminar", key=f"eliminar_{idx}"):
-            st.session_state["canchas"].pop(idx)
+            canchas.pop(idx)
+            st.session_state["canchas"] = canchas
             st.experimental_rerun()
+
 
 
