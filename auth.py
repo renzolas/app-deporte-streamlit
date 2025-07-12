@@ -24,14 +24,13 @@ def login_user(email: str, password: str) -> bool:
     conn = get_db()
     try:
         user = conn.execute(
-            "SELECT id, email, is_admin FROM users WHERE email = ?",
+            "SELECT email, is_admin FROM users WHERE email = ?",
             (email,)).fetchone()
         
         if user:
             st.session_state.update({
-                "user_id": user[0],
-                "email": user[1],
-                "is_admin": user[2],
+                "email": user[0],
+                "is_admin": user[1],
                 "logged_in": True
             })
             return True
