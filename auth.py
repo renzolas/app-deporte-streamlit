@@ -38,4 +38,3 @@ def login_user(email: str, password: str) -> bool:
         return False
     finally:
         conn.close()
-
