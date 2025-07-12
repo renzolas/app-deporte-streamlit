@@ -1,10 +1,15 @@
 import sqlite3
+import secrets
+import hashlib
+
+def hash_password(password: str, salt: str) -> str:
+    return hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000).hex()
 
 def get_db():
     conn = sqlite3.connect("sports.db", check_same_thread=False)
     cursor = conn.cursor()
     
-    # Tabla de usuarios
+    # Tabla usuarios
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -14,7 +19,7 @@ def get_db():
         )
     """)
     
-    # Tabla de canchas
+    # Tabla canchas
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS fields (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,19 +30,18 @@ def get_db():
         )
     """)
     
-    # Tabla de reservas
+    # Tabla reservas
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_email TEXT NOT NULL,
             field_id INTEGER NOT NULL,
             date TEXT NOT NULL,
-            time_slot TEXT NOT NULL,
-            FOREIGN KEY (field_id) REFERENCES fields(id)
+            time_slot TEXT NOT NULL
         )
     """)
     
-    # Crear admin por defecto (email: admin@admin.com, contraseña: admin)
+    # Crear admin por defecto si no existe
     cursor.execute("SELECT 1 FROM users WHERE email = 'admin@admin.com'")
     if not cursor.fetchone():
         salt = secrets.token_hex(16)
