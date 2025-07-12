@@ -1,10 +1,7 @@
 import sqlite3
 
 def get_db():
-    """Retorna una conexión a la base de datos con todas las tablas necesarias"""
     conn = sqlite3.connect("sports.db", check_same_thread=False)
-    
-    # Crear tablas si no existen
     cursor = conn.cursor()
     
     # Tabla de usuarios
@@ -13,8 +10,7 @@ def get_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
-            is_admin BOOLEAN DEFAULT FALSE,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            is_admin BOOLEAN DEFAULT FALSE
         )
     """)
     
@@ -33,23 +29,21 @@ def get_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
+            user_email TEXT NOT NULL,
             field_id INTEGER NOT NULL,
             date TEXT NOT NULL,
             time_slot TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id),
-            FOREIGN KEY (field_id) REFERENCES fields(id),
-            UNIQUE(field_id, date, time_slot)
+            FOREIGN KEY (field_id) REFERENCES fields(id)
         )
     """)
     
-    # Crear usuario admin por defecto
-    cursor.execute("SELECT 1 FROM users WHERE email = 'admin@sports.com'")
+    # Crear admin por defecto (email: admin@admin.com, contraseña: admin)
+    cursor.execute("SELECT 1 FROM users WHERE email = 'admin@admin.com'")
     if not cursor.fetchone():
+        salt = secrets.token_hex(16)
         cursor.execute(
             "INSERT INTO users (email, password_hash, is_admin) VALUES (?, ?, ?)",
-            ("admin@sports.com", "hashed_password", True)
+            ("admin@admin.com", hash_password("admin", salt), True)
         )
     
     conn.commit()
