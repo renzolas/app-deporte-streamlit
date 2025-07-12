@@ -1,16 +1,18 @@
 import streamlit as st
-from auth import login_user, register_user
-from fields import manage_fields
-from bookings import book_field
+from app.auth import login_user, register_user
+from app.fields import manage_fields
+from app.bookings import book_field
 
 def main():
     st.set_page_config(page_title="Sistema de Reservas", layout="wide")
     
-    # Estado inicial
     if "logged_in" not in st.session_state:
-        st.session_state.logged_in = False
+        st.session_state.update({
+            "logged_in": False,
+            "is_admin": False,
+            "email": ""
+        })
     
-    # Menú principal
     if not st.session_state.logged_in:
         show_auth()
     else:
@@ -45,7 +47,7 @@ def show_auth():
                     st.error("El email ya está registrado")
 
 def show_main():
-    st.sidebar.title(f"Hola, {st.session_state.email}")
+    st.sidebar.title(f"Bienvenido, {st.session_state.email}")
     
     if st.sidebar.button("Cerrar Sesión"):
         st.session_state.clear()
@@ -58,5 +60,4 @@ def show_main():
 
 if __name__ == "__main__":
     main()
-
 
