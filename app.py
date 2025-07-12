@@ -92,7 +92,7 @@ def mostrar_interfaz_autenticacion():
                             "es_admin": email == "admin@cancha.com"
                         })
                         st.success("¡Bienvenido!")
-                        st.experimental_rerun()
+                        st.rerun()
                     else:
                         st.error("Credenciales incorrectas")
 
@@ -107,7 +107,7 @@ def mostrar_interfaz_principal():
             "email": "",
             "es_admin": False
         })
-        st.experimental_rerun()
+        st.rerun()
 
     # Interfaz según tipo de usuario
     if st.session_state["es_admin"]:
