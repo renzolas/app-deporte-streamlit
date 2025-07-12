@@ -1,11 +1,12 @@
 import streamlit as st
-from app.auth import login_user, register_user
-from app.fields import manage_fields
-from app.bookings import book_field
+from auth import login_user, register_user
+from fields import manage_fields
+from bookings import book_field
 
 def main():
     st.set_page_config(page_title="Sistema de Reservas", layout="wide")
     
+    # Estado inicial de sesión
     if "logged_in" not in st.session_state:
         st.session_state.update({
             "logged_in": False,
@@ -19,37 +20,37 @@ def main():
         show_main()
 
 def show_auth():
-    st.title("Bienvenido al Sistema de Reservas")
+    st.title("⚽ Sistema de Reservas Deportivas")
     
     tab1, tab2 = st.tabs(["Iniciar Sesión", "Registrarse"])
     
     with tab1:
-        with st.form("login"):
-            email = st.text_input("Email")
+        with st.form("login_form"):
+            email = st.text_input("Correo electrónico")
             password = st.text_input("Contraseña", type="password")
             
             if st.form_submit_button("Ingresar"):
                 if login_user(email, password):
-                    st.success("Sesión iniciada correctamente")
+                    st.success("¡Bienvenido! Redirigiendo...")
                     st.rerun()
                 else:
                     st.error("Credenciales incorrectas")
-    
+
     with tab2:
-        with st.form("register"):
-            email = st.text_input("Email")
-            password = st.text_input("Contraseña", type="password")
+        with st.form("register_form"):
+            email = st.text_input("Correo electrónico (registro)")
+            password = st.text_input("Contraseña (registro)", type="password")
             
-            if st.form_submit_button("Registrarse"):
+            if st.form_submit_button("Crear cuenta"):
                 if register_user(email, password):
-                    st.success("Registro exitoso. Por favor inicia sesión.")
+                    st.success("¡Registro exitoso! Por favor inicia sesión")
                 else:
-                    st.error("El email ya está registrado")
+                    st.error("El correo ya está registrado")
 
 def show_main():
-    st.sidebar.title(f"Bienvenido, {st.session_state.email}")
+    st.sidebar.title(f"👤 {st.session_state.email}")
     
-    if st.sidebar.button("Cerrar Sesión"):
+    if st.sidebar.button("🚪 Cerrar sesión"):
         st.session_state.clear()
         st.rerun()
     
@@ -60,4 +61,3 @@ def show_main():
 
 if __name__ == "__main__":
     main()
-
