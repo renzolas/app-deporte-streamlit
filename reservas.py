@@ -1,11 +1,7 @@
 import streamlit as st
 import sqlite3
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 from typing import List, Dict, Optional
-
-# ---------------------------
-# CONFIGURACIÓN INICIAL
-# ---------------------------
 
 # Horarios disponibles para reservas
 HORARIOS = [
@@ -17,11 +13,23 @@ HORARIOS = [
 def init_db():
     """Inicializa la conexión a la base de datos"""
     conn = sqlite3.connect("reservas.db")
+    
+    # Crear tabla de reservas si no existe
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS reservas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario TEXT NOT NULL,
+            cancha_id INTEGER NOT NULL,
+            dia TEXT NOT NULL,
+            horario TEXT NOT NULL,
+            precio REAL NOT NULL,
+            fecha_reserva TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (cancha_id) REFERENCES canchas(id),
+            UNIQUE(cancha_id, dia, horario)
+        )
+    """)
+    conn.commit()
     return conn
-
-# ---------------------------
-# FUNCIONES PRINCIPALES
-# ---------------------------
 
 def reservar_cancha():
     """Interfaz para realizar reservas de canchas"""
@@ -33,96 +41,100 @@ def reservar_cancha():
         return
     
     email_usuario = st.session_state["email"]
-    st.markdown(f"👤 **Usuario:** {email_usuario}")
+    st.markdown(f"👤 Usuario: {email_usuario}")
     
     # Obtener canchas disponibles
-    conn = init_db()
-    canchas = conn.execute("""
-        SELECT id, nombre, deporte, precio 
-        FROM canchas 
-        WHERE disponible = TRUE
-        ORDER BY nombre
-    """).fetchall()
-    conn.close()
+    try:
+        conn = init_db()
+        canchas = conn.execute("""
+            SELECT id, nombre, deporte, precio 
+            FROM canchas 
+            WHERE disponible = TRUE
+            ORDER BY nombre
+        """).fetchall()
+    except sqlite3.Error as e:
+        st.error(f"Error al cargar canchas: {str(e)}")
+        return
+    finally:
+        conn.close()
     
     if not canchas:
         st.info("🏟️ No hay canchas disponibles actualmente")
         return
     
-    # Selección de cancha y fecha
+    # Selección de cancha
     nombres_canchas = [f"{c[1]} ({c[2]} - ${c[3]}/hora)" for c in canchas]
-    cancha_seleccionada = st.selectbox("Seleccione cancha:", nombres_canchas)
-    
-    # Extraer ID de la cancha seleccionada
+    cancha_seleccionada = st.selectbox("Selecciona una cancha:", nombres_canchas)
     cancha_id = canchas[nombres_canchas.index(cancha_seleccionada)][0]
     
-    # Selección de fecha con restricciones
+    # Selección de fecha
     hoy = date.today()
-    max_fecha = hoy + timedelta(days=30)
     dia = st.date_input(
-        "Seleccione fecha:",
+        "Selecciona una fecha:",
         min_value=hoy,
-        max_value=max_fecha,
-        value=hoy
-    )
+        max_value=hoy + timedelta(days=30)
     
-    # Mostrar horarios disponibles
+    # Mostrar horarios
     st.markdown("### 🕒 Horarios Disponibles")
     mostrar_horarios_disponibles(cancha_id, dia, email_usuario)
 
 def mostrar_horarios_disponibles(cancha_id: int, dia: date, usuario: str):
     """Muestra los horarios disponibles en formato de grilla"""
-    conn = init_db()
-    
-    # Obtener reservas existentes para esta cancha y fecha
-    reservas = conn.execute("""
-        SELECT horario FROM reservas 
-        WHERE cancha_id = ? AND dia = ?
-    """, (cancha_id, str(dia))).fetchall()
-    
-    horarios_ocupados = [r[0] for r in reservas]
-    
-    # Mostrar horarios en columnas
-    cols = st.columns(4)  # 4 columnas para mejor visualización
-    
-    for i, horario in enumerate(HORARIOS):
-        with cols[i % 4]:
-            if horario in horarios_ocupados:
-                st.button(
-                    f"❌ {horario}",
-                    key=f"ocupado_{i}",
-                    disabled=True,
-                    help="Horario ya reservado"
-                )
-            else:
-                if st.button(f"✅ {horario}", key=f"disp_{i}"):
-                    confirmar_reserva(conn, cancha_id, dia, horario, usuario)
-    
-    conn.close()
+    try:
+        conn = init_db()
+        
+        # Obtener reservas existentes
+        reservas = conn.execute("""
+            SELECT horario FROM reservas 
+            WHERE cancha_id = ? AND dia = ?
+        """, (cancha_id, str(dia))).fetchall()
+        
+        horarios_ocupados = [r[0] for r in reservas]
+        
+        # Mostrar en columnas
+        cols = st.columns(4)
+        
+        for i, horario in enumerate(HORARIOS):
+            with cols[i % 4]:
+                if horario in horarios_ocupados:
+                    st.button(
+                        f"❌ {horario}",
+                        key=f"ocupado_{i}",
+                        disabled=True,
+                        help="Horario no disponible"
+                    )
+                else:
+                    if st.button(f"✅ {horario}", key=f"disp_{i}"):
+                        confirmar_reserva(conn, cancha_id, dia, horario, usuario)
+        
+    except sqlite3.Error as e:
+        st.error(f"Error al ver horarios: {str(e)}")
+    finally:
+        conn.close()
 
 def confirmar_reserva(conn, cancha_id: int, dia: date, horario: str, usuario: str):
     """Procesa la confirmación de una reserva"""
     try:
-        # Obtener detalles de la cancha
-        cancha = conn.execute("""
-            SELECT nombre, precio FROM canchas WHERE id = ?
-        """, (cancha_id,)).fetchone()
+        # Obtener precio de la cancha
+        precio = conn.execute("""
+            SELECT precio FROM canchas WHERE id = ?
+        """, (cancha_id,)).fetchone()[0]
         
         # Insertar reserva
         conn.execute("""
             INSERT INTO reservas (usuario, cancha_id, dia, horario, precio)
             VALUES (?, ?, ?, ?, ?)
-        """, (usuario, cancha_id, str(dia), horario, cancha[1]))
+        """, (usuario, cancha_id, str(dia), horario, precio))
         
         conn.commit()
-        st.success(f"✅ Reserva confirmada para el {dia} a las {horario} en {cancha[0]}")
+        st.success(f"✅ Reserva confirmada para el {dia} a las {horario}")
         st.balloons()
-        st.experimental_rerun()
+        st.rerun()
         
     except sqlite3.IntegrityError:
-        st.error("⚠️ Este horario ya fue reservado por otro usuario. Por favor seleccione otro.")
+        st.error("⚠️ Este horario ya fue reservado. Por favor selecciona otro.")
     except Exception as e:
-        st.error(f"❌ Error al procesar la reserva: {str(e)}")
+        st.error(f"❌ Error al reservar: {str(e)}")
 
 def ver_reservas():
     """Muestra las reservas según el tipo de usuario"""
@@ -131,71 +143,53 @@ def ver_reservas():
         return
     
     es_admin = st.session_state.get("es_admin", False)
-    email_actual = st.session_state["email"]
+    email = st.session_state["email"]
     
-    conn = init_db()
-    
-    if es_admin:
-        st.subheader("📋 Todas las Reservas")
-        reservas = conn.execute("""
-            SELECT r.id, r.usuario, c.nombre, c.deporte, r.dia, r.horario, r.precio, r.fecha_reserva
-            FROM reservas r
-            JOIN canchas c ON r.cancha_id = c.id
-            ORDER BY r.dia DESC, r.horario DESC
-        """).fetchall()
-    else:
-        st.subheader("📋 Mis Reservas")
-        reservas = conn.execute("""
-            SELECT r.id, r.usuario, c.nombre, c.deporte, r.dia, r.horario, r.precio, r.fecha_reserva
-            FROM reservas r
-            JOIN canchas c ON r.cancha_id = c.id
-            WHERE r.usuario = ?
-            ORDER BY r.dia DESC, r.horario DESC
-        """, (email_actual,)).fetchall()
-    
-    if not reservas:
-        st.info("No hay reservas registradas")
-        conn.close()
-        return
-    
-    # Filtros para admin
-    if es_admin:
-        with st.expander("🔍 Filtros Avanzados", expanded=False):
-            col1, col2 = st.columns(2)
-            with col1:
-                filtro_usuario = st.text_input("Filtrar por usuario")
-            with col2:
-                filtro_fecha = st.date_input("Filtrar por fecha")
-    
-    # Mostrar reservas
-    for r in reservas:
-        # Aplicar filtros si es admin
-        if es_admin:
-            if filtro_usuario and filtro_usuario.lower() not in r[1].lower():
-                continue
-            if filtro_fecha and str(filtro_fecha) != r[4]:
-                continue
+    try:
+        conn = init_db()
         
-        with st.container():
-            st.markdown(f"""
-            ### 🏟️ {r[2]} ({r[3]})
-            **📅 Fecha:** {r[4]}  
-            **🕒 Horario:** {r[5]}  
-            **💲 Precio:** ${r[6]:.2f}  
-            **👤 Usuario:** {r[1] if es_admin else 'Tú'}  
-            **⏰ Reservado el:** {r[7][:16]}  
-            """)
-            
-            # Botón para cancelar reserva
-            if st.button("❌ Cancelar Reserva", key=f"cancel_{r[0]}"):
-                conn.execute("DELETE FROM reservas WHERE id = ?", (r[0],))
-                conn.commit()
-                st.success("Reserva cancelada correctamente")
-                st.experimental_rerun()
-            
-            st.markdown("---")
-    
-    conn.close()
+        if es_admin:
+            st.subheader("📋 Todas las Reservas")
+            reservas = conn.execute("""
+                SELECT r.id, r.usuario, c.nombre, c.deporte, r.dia, r.horario, r.precio, r.fecha_reserva
+                FROM reservas r
+                JOIN canchas c ON r.cancha_id = c.id
+                ORDER BY r.dia DESC, r.horario DESC
+            """).fetchall()
+        else:
+            st.subheader("📋 Mis Reservas")
+            reservas = conn.execute("""
+                SELECT r.id, r.usuario, c.nombre, c.deporte, r.dia, r.horario, r.precio, r.fecha_reserva
+                FROM reservas r
+                JOIN canchas c ON r.cancha_id = c.id
+                WHERE r.usuario = ?
+                ORDER BY r.dia DESC, r.horario DESC
+            """, (email,)).fetchall()
+        
+        if not reservas:
+            st.info("No hay reservas registradas")
+            return
+        
+        # Mostrar cada reserva
+        for r in reservas:
+            with st.expander(f"{r[4]} - {r[2]} ({r[3]})"):
+                st.markdown(f"""
+                **🕒 Horario:** {r[5]}  
+                **💲 Precio:** ${r[6]:.2f}  
+                **📅 Fecha reserva:** {r[7][:16]}  
+                {f"**👤 Usuario:** {r[1]}" if es_admin else ""}
+                """)
+                
+                if st.button("❌ Cancelar", key=f"cancel_{r[0]}"):
+                    conn.execute("DELETE FROM reservas WHERE id = ?", (r[0],))
+                    conn.commit()
+                    st.success("Reserva cancelada")
+                    st.rerun()
+                
+    except sqlite3.Error as e:
+        st.error(f"Error al cargar reservas: {str(e)}")
+    finally:
+        conn.close()
 
 
 
