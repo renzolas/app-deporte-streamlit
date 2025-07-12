@@ -4,7 +4,7 @@ import hashlib
 import secrets
 from datetime import datetime
 from typing import Tuple, Optional
-
+from typing import Optional, Dict, Tuple, List 
 # ---------------------------
 # CONFIGURACIÓN DE BASE DE DATOS
 # ---------------------------
